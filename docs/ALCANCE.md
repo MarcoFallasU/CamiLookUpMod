@@ -60,5 +60,6 @@ Mod para **Minecraft Forge 1.21.11** que permite inspeccionar bloques y entidade
 2. **Fase 2**: resto de bloques y entidades especiales, restricciones del servidor completas y pantalla de configuración.
 
 ## Notas de desarrollo
+- Ramas: `main` estable y ramas `feature/`, `fix/`, `docs/` o `chore/` con nombre corto en inglés y `kebab-case` (ver README).
 - Commits a nombre de Marco Fallas Umaña `<marco.fallas.umana@est.una.ac.cr>`, sin línea de co-autor.
 - La compilación requiere acceso de red a `maven.minecraftforge.net`, `*.mojang.com`, `libraries.minecraft.net` y `resources.download.minecraft.net`.

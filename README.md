@@ -12,7 +12,8 @@ El alcance acordado está en [`docs/ALCANCE.md`](docs/ALCANCE.md).
 - **Click izquierdo** sobre el objetivo lo **mantiene abierto**: el recuadro flota junto al bloque o sobre la entidad
   y se achica con la distancia. Otro click sobre el recuadro o sobre el objetivo lo cierra.
 - El botón **📌** del recuadro abierto (o **CTRL + click** sobre el objetivo) lo **fija** como una ventana en la
-  pantalla que se arrastra por su cabecera y se cierra con **✕**. Solo si el servidor tiene el mod.
+  pantalla que se arrastra por su cabecera, se redimensiona desde la esquina inferior derecha y se cierra con **✕**.
+  Solo si el servidor tiene el mod.
 - **Rueda del mouse** sobre un recuadro desplaza su contenido; **click derecho** ejecuta la acción de un addon.
 
 ## Compilación
@@ -30,6 +31,17 @@ ForgeGradle intenta descargar los JDK 25 y 8 por su cuenta. Si esa descarga fall
 ./gradlew runServer        # servidor de desarrollo (carpeta run-server/)
 ./gradlew runClient -PquickPlay=localhost   # entra directo a un servidor
 ```
+
+## Ramas
+
+- `main`: versión estable. Solo recibe cambios revisados, mediante pull request.
+- `feature/<nombre>`: funcionalidades nuevas (por ejemplo `feature/phase-1`, `feature/redstone-info`).
+- `fix/<nombre>`: correcciones de errores.
+- `docs/<nombre>`: solo documentación.
+- `chore/<nombre>`: compilación, dependencias y mantenimiento.
+
+Los nombres van en inglés, en minúsculas y con guiones (`kebab-case`), y describen el cambio en pocas palabras.
+Cada rama sale de `main` y vuelve a `main` con un pull request.
 
 ## Configuración
 
