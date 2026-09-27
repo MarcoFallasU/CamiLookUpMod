@@ -1,0 +1,41 @@
+{
+  "key.camilookup.cursor": "Cursor mode",
+  "key.category.camilookup.main": "Cami LookUp",
+
+  "camilookup.yes": "Yes",
+  "camilookup.no": "No",
+
+  "camilookup.notice.denied": "The server restricts this information",
+  "camilookup.notice.out_of_range": "Out of range",
+
+  "camilookup.technical.hardness": "Hardness",
+  "camilookup.technical.unbreakable": "Unbreakable",
+  "camilookup.technical.tool": "Tool",
+  "camilookup.technical.harvestable": "Drops with current tool",
+  "camilookup.technical.blast_resistance": "Blast resistance",
+  "camilookup.technical.light": "Light",
+  "camilookup.technical.light_value": "emits %s · block %s · sky %s",
+  "camilookup.technical.biome": "Biome",
+  "camilookup.technical.position": "Position",
+
+  "camilookup.tool.pickaxe": "Pickaxe",
+  "camilookup.tool.axe": "Axe",
+  "camilookup.tool.shovel": "Shovel",
+  "camilookup.tool.hoe": "Hoe",
+  "camilookup.tier.stone": "stone",
+  "camilookup.tier.iron": "iron",
+  "camilookup.tier.diamond": "diamond",
+
+  "camilookup.container.empty": "Empty",
+  "camilookup.container.more": "+%s more",
+  "camilookup.container.unlooted": "Loot not generated yet",
+
+  "camilookup.entity.armor": "Armor",
+  "camilookup.entity.baby": "Baby",
+  "camilookup.entity.rotation": "Rotation",
+  "camilookup.entity.grows_in": "Grows up in",
+  "camilookup.entity.breed_cooldown": "Can breed in",
+  "camilookup.entity.in_love": "In love",
+  "camilookup.entity.despawns_in": "Despawns in",
+  "camilookup.entity.never_despawns": "Never despawns"
+}

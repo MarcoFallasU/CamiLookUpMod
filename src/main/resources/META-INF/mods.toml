@@ -1,0 +1,27 @@
+modLoader="javafml"
+loaderVersion="${forge_version_range}"
+license="All Rights Reserved. Using the Cami LookUp API and creating addons is explicitly permitted."
+
+[[mods]]
+modId="${mod_id}"
+version="${mod_version}"
+displayName="${mod_name}"
+authors="${mod_authors}"
+# Works on servers without the mod (client-side information only) and on clients without it.
+displayTest="IGNORE_ALL_VERSION"
+description='''Inspect blocks and entities with a free cursor.
+Hold ALT to free the cursor, hover to see information and click to pin boxes.'''
+
+[[dependencies.${mod_id}]]
+    modId="forge"
+    mandatory=true
+    versionRange="${forge_version_range}"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.${mod_id}]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="${minecraft_version_range}"
+    ordering="NONE"
+    side="BOTH"

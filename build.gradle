@@ -1,0 +1,87 @@
+plugins {
+    id 'java'
+    id 'idea'
+    id 'eclipse'
+    id 'net.minecraftforge.gradle' version '[7.0.3,8)'
+}
+
+version = mod_version
+group = mod_group
+
+base {
+    archivesName = mod_id
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+minecraft {
+    mappings channel: 'official', version: minecraft_version
+
+    runs {
+        configureEach {
+            workingDir = layout.projectDirectory.dir('run')
+
+            systemProperty 'eventbus.api.strictRuntimeChecks', 'true'
+        }
+
+        register('client') {
+            // Dev convenience: ./gradlew runClient -PquickPlay=localhost joins a server directly.
+            if (project.hasProperty('quickPlay')) {
+                args '--quickPlayMultiplayer', project.property('quickPlay')
+            }
+        }
+
+        register('server') {
+            workingDir = layout.projectDirectory.dir('run-server')
+            args '--nogui'
+        }
+    }
+}
+
+repositories {
+    minecraft.mavenizer(it)
+    maven fg.forgeMaven
+    maven fg.minecraftLibsMaven
+    mavenCentral()
+}
+
+dependencies {
+    implementation minecraft.dependency("net.minecraftforge:forge:${minecraft_version}-${forge_version}")
+    annotationProcessor 'net.minecraftforge:eventbus-validator:7.0.5'
+}
+
+def resourceProps = [
+        mod_id               : mod_id,
+        mod_name             : mod_name,
+        mod_version          : mod_version,
+        mod_authors          : mod_authors,
+        minecraft_version_range: minecraft_version_range,
+        forge_version_range  : forge_version_range,
+]
+
+tasks.named('processResources', ProcessResources) {
+    filteringCharset = 'UTF-8'
+    inputs.properties resourceProps
+    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
+        expand resourceProps
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+tasks.named('jar', Jar) {
+    manifest {
+        attributes([
+                'Specification-Title'   : mod_id,
+                'Specification-Vendor'  : mod_authors,
+                'Specification-Version' : '1',
+                'Implementation-Title'  : mod_name,
+                'Implementation-Version': mod_version,
+                'Implementation-Vendor' : mod_authors,
+        ])
+    }
+}
