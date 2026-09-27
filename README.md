@@ -9,9 +9,11 @@ El alcance acordado está en [`docs/ALCANCE.md`](docs/ALCANCE.md).
 - Pasa el cursor sobre un bloque o entidad para ver el **resumen** (los bloques se resaltan con un contorno y las
   entidades con el efecto de brillo vanilla);
   mantén **SHIFT** para el **detalle completo**.
-- **Click izquierdo** fija el recuadro. Otro click sobre el recuadro o sobre el objetivo lo cierra.
-  Con **CTRL** se usa el anclaje alternativo (objetivo ↔ pantalla).
-- **Rueda del mouse** sobre un recuadro fijado desplaza su contenido; **click derecho** ejecuta la acción de un addon.
+- **Click izquierdo** sobre el objetivo lo **mantiene abierto**: el recuadro flota junto al bloque o sobre la entidad
+  y se achica con la distancia. Otro click sobre el recuadro o sobre el objetivo lo cierra.
+- El botón **📌** del recuadro abierto (o **CTRL + click** sobre el objetivo) lo **fija** como una ventana en la
+  pantalla que se arrastra por su cabecera y se cierra con **✕**. Solo si el servidor tiene el mod.
+- **Rueda del mouse** sobre un recuadro desplaza su contenido; **click derecho** ejecuta la acción de un addon.
 
 ## Compilación
 
@@ -31,8 +33,8 @@ ForgeGradle intenta descargar los JDK 25 y 8 por su cuenta. Si esa descarga fall
 
 ## Configuración
 
-- Cliente (`config/camilookup-client.toml`): modo de activación (mantener/alternar), distancia de inspección,
-  información técnica y anclaje por defecto de los recuadros fijados.
+- Cliente (`config/camilookup-client.toml`): modo de activación (mantener/alternar), distancia de inspección
+  e información técnica.
 - Servidor (`serverconfig/camilookup-server.toml`): distancia máxima, línea de visión, categorías desactivadas,
   detalles de otros jugadores y límite de solicitudes por segundo.
 

@@ -50,7 +50,9 @@ public final class CamiLookUpClient {
                 return false;
             }
             if (event.getAction() == GLFW.GLFW_PRESS) {
-                PinInteractions.onClick(event.getInfo().button(), event.getInfo().hasControlDown());
+                PinInteractions.onPress(event.getInfo().button(), event.getInfo().hasControlDown());
+            } else if (event.getAction() == GLFW.GLFW_RELEASE) {
+                PinInteractions.onRelease(event.getInfo().button());
             }
             // Cursor mode never lets clicks reach the world.
             return true;

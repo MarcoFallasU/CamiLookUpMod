@@ -7,7 +7,6 @@ import io.github.marcofallasu.camilookup.api.target.EntityAccessor;
 import io.github.marcofallasu.camilookup.api.target.LookUpAccessor;
 import io.github.marcofallasu.camilookup.core.InfoCollector;
 import io.github.marcofallasu.camilookup.core.ModNames;
-import io.github.marcofallasu.camilookup.network.InfoResponsePacket;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -29,13 +28,13 @@ public record DisplayInfo(ItemStack icon, Component title, Component modName, Li
         Component notice = null;
         ServerInfoCache.Entry server = ServerInfoCache.get(accessor.ref());
         if (server != null) {
-            if (server.status() == InfoResponsePacket.Status.OK) {
-                sections.addAll(server.sections());
-            } else if (server.status() == InfoResponsePacket.Status.DENIED) {
-                notice = Component.translatable("camilookup.notice.denied");
-            } else if (server.status() == InfoResponsePacket.Status.OUT_OF_RANGE) {
-                notice = Component.translatable("camilookup.notice.out_of_range");
-            }
+            sections.addAll(server.sections());
+            notice = switch (server.status()) {
+                case OK -> null;
+                case DENIED -> Component.translatable("camilookup.notice.denied");
+                case OUT_OF_RANGE -> Component.translatable("camilookup.notice.out_of_range");
+                case GONE -> Component.translatable("camilookup.notice.unavailable");
+            };
         }
         sections.sort(Comparator.comparingInt(InfoSection::priority));
 
@@ -51,6 +50,12 @@ public record DisplayInfo(ItemStack icon, Component title, Component modName, Li
             notice = notice.copy().withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC);
         }
         return new DisplayInfo(collector.icon(), title, modName, List.copyOf(elements), notice);
+    }
+
+    /** The same information marked as no longer up to date. */
+    public DisplayInfo unavailable() {
+        return new DisplayInfo(icon, title, modName, elements, Component.translatable("camilookup.notice.unavailable")
+                .withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC));
     }
 
     private static String namespace(LookUpAccessor accessor) {

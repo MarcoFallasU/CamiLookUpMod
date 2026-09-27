@@ -11,6 +11,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +28,7 @@ public final class InfoPanel {
     private static final int SUMMARY_GRID_LIMIT = 18;
     private static final int MAX_HEARTS = 20;
     private static final int SCROLLBAR = 4;
+    private static final int BUTTON_SPACING = PanelButton.SIZE + 2;
 
     private static final Identifier HEART_CONTAINER = Identifier.withDefaultNamespace("hud/heart/container");
     private static final Identifier HEART_FULL = Identifier.withDefaultNamespace("hud/heart/full");
@@ -36,18 +38,21 @@ public final class InfoPanel {
     private final Component title;
     private final List<Row> body;
     private final List<Row> footer;
+    private final List<PanelButton> buttons;
     private final int contentWidth;
     private final int headerHeight;
     private final int bodyHeight;
     private final int footerHeight;
 
-    private InfoPanel(ItemStack icon, Component title, List<Row> body, List<Row> footer, Font font) {
+    private InfoPanel(ItemStack icon, Component title, List<Row> body, List<Row> footer, List<PanelButton> buttons, Font font) {
         this.icon = icon;
         this.title = title;
         this.body = body;
         this.footer = footer;
+        this.buttons = List.copyOf(buttons);
         this.headerHeight = icon.isEmpty() ? 10 : 16;
-        int width = font.width(title) + (icon.isEmpty() ? 0 : CELL + 2);
+        int width = font.width(title) + (icon.isEmpty() ? 0 : CELL + 2)
+                + (buttons.isEmpty() ? 0 : 4 + buttons.size() * BUTTON_SPACING);
         int bodySum = 0;
         for (Row row : body) {
             width = Math.max(width, row.width());
@@ -64,6 +69,10 @@ public final class InfoPanel {
     }
 
     public static InfoPanel layout(DisplayInfo info, boolean detailed, Font font) {
+        return layout(info, detailed, font, List.of());
+    }
+
+    public static InfoPanel layout(DisplayInfo info, boolean detailed, Font font, List<PanelButton> buttons) {
         List<Row> body = new ArrayList<>();
         for (InfoElement element : info.elements()) {
             if (element.visibility().isShown(detailed)) {
@@ -75,7 +84,7 @@ public final class InfoPanel {
             footer.add(new TextRow(info.notice(), font));
         }
         footer.add(new TextRow(info.modName(), font));
-        return new InfoPanel(info.icon(), info.title(), body, footer, font);
+        return new InfoPanel(info.icon(), info.title(), body, footer, buttons, font);
     }
 
     private static void addRows(InfoElement element, boolean detailed, Font font, List<Row> rows) {
@@ -169,6 +178,30 @@ public final class InfoPanel {
         return Math.max(0, bodyHeight - visibleBodyHeight(maxHeight));
     }
 
+    public int headerHeight() {
+        return headerHeight;
+    }
+
+    /** The header button at a point, in the same coordinates the box was rendered with. */
+    public @Nullable PanelButton buttonAt(double mouseX, double mouseY, int left, int top, int maxHeight) {
+        for (int i = 0; i < buttons.size(); i++) {
+            int x = buttonX(i, left, maxHeight);
+            int y = buttonY(top);
+            if (mouseX >= x - 1 && mouseX < x + PanelButton.SIZE + 1 && mouseY >= y - 1 && mouseY < y + PanelButton.SIZE + 1) {
+                return buttons.get(i);
+            }
+        }
+        return null;
+    }
+
+    private int buttonX(int index, int left, int maxHeight) {
+        return left + width(maxHeight) - (buttons.size() - index) * BUTTON_SPACING + 2;
+    }
+
+    private int buttonY(int top) {
+        return top + (headerHeight - PanelButton.SIZE) / 2;
+    }
+
     private int gapAfterHeader() {
         return 2;
     }
@@ -199,6 +232,10 @@ public final class InfoPanel {
         } else {
             graphics.renderItem(icon, left, y);
             graphics.drawString(font, title, left + CELL + 2, y + 4, -1, true);
+        }
+        PanelButton hoveredButton = buttonAt(mouseX, mouseY, left, top, maxHeight);
+        for (int i = 0; i < buttons.size(); i++) {
+            buttons.get(i).render(graphics, buttonX(i, left, maxHeight), buttonY(top), buttons.get(i) == hoveredButton);
         }
         y += headerHeight + gapAfterHeader();
 

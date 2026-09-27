@@ -6,7 +6,6 @@ import io.github.marcofallasu.camilookup.api.target.TargetRef;
 import io.github.marcofallasu.camilookup.client.ClientState;
 import io.github.marcofallasu.camilookup.client.DisplayInfo;
 import io.github.marcofallasu.camilookup.client.ServerInfoCache;
-import io.github.marcofallasu.camilookup.config.ClientConfig.PinAnchor;
 import io.github.marcofallasu.camilookup.core.Targets;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -17,15 +16,23 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-/** Keeps the pinned boxes, updating target-anchored ones and closing them when their target is gone. */
+/**
+ * Keeps the boxes kept open next to their targets and the pinned windows. Open boxes close when their target is gone
+ * or out of range; windows stay until closed and keep their last information if the target becomes unavailable.
+ */
 public final class PinManager {
-    /** Ticks between server refreshes of a target-anchored pin. */
+    /** Ticks between server refreshes of a kept or pinned box. */
     private static final int REFRESH_TICKS = 10;
-    /** Extra distance before a pin closes, so it does not flicker at the edge of the range. */
+    /** Extra distance before an open box closes, so it does not flicker at the edge of the range. */
     private static final double RANGE_MARGIN = 2.0;
 
+    /** Draw order: later entries are drawn on top. Windows are always drawn above open boxes. */
     private static final List<Pin> PINS = new ArrayList<>();
     private static @Nullable ClientLevel level;
+
+    private static @Nullable Pin dragging;
+    private static double dragOffsetX;
+    private static double dragOffsetY;
 
     private PinManager() {
     }
@@ -37,7 +44,7 @@ public final class PinManager {
     public static void tick() {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level != level) {
-            PINS.clear();
+            clear();
             level = minecraft.level;
         }
         if (level == null || minecraft.player == null) {
@@ -46,48 +53,82 @@ public final class PinManager {
         Iterator<Pin> iterator = PINS.iterator();
         while (iterator.hasNext()) {
             Pin pin = iterator.next();
-            if (pin.anchor() != PinAnchor.TARGET) {
-                continue;
-            }
             LookUpAccessor accessor = Targets.resolve(level, minecraft.player, pin.ref(), false);
-            if (accessor == null
-                    || accessor instanceof BlockAccessor block && block.state().getBlock() != pin.block()
-                    || Targets.distance(minecraft.player.getEyePosition(), accessor) > ClientState.maxDistance() + RANGE_MARGIN) {
-                iterator.remove();
-                continue;
+            boolean exists = accessor != null
+                    && !(accessor instanceof BlockAccessor block && block.state().getBlock() != pin.block());
+            if (pin.mode() == Pin.Mode.OPEN) {
+                if (!exists || Targets.distance(minecraft.player.getEyePosition(), accessor) > ClientState.maxDistance() + RANGE_MARGIN) {
+                    iterator.remove();
+                    continue;
+                }
             }
             ServerInfoCache.want(pin.ref(), REFRESH_TICKS);
-            pin.update(accessor, DisplayInfo.build(accessor));
+            if (exists) {
+                pin.update(accessor, DisplayInfo.build(accessor));
+            } else {
+                pin.markUnavailable();
+            }
         }
     }
 
-    public static Pin add(LookUpAccessor accessor, PinAnchor anchor, double screenX, double screenY) {
+    /** Opens a box next to the target, or closes it if it was already open. */
+    public static void toggleOpen(LookUpAccessor accessor) {
+        Pin existing = find(accessor.ref(), Pin.Mode.OPEN);
+        if (existing != null) {
+            remove(existing);
+        } else {
+            add(accessor, Pin.Mode.OPEN, 0, 0);
+        }
+    }
+
+    /** Pins the target as a window at a screen position, or brings its existing window to the front. */
+    public static Pin pinWindow(LookUpAccessor accessor, double x, double y) {
+        Pin existing = find(accessor.ref(), Pin.Mode.WINDOW);
+        if (existing != null) {
+            bringToFront(existing);
+            return existing;
+        }
+        return add(accessor, Pin.Mode.WINDOW, x, y);
+    }
+
+    private static Pin add(LookUpAccessor accessor, Pin.Mode mode, double x, double y) {
         ServerInfoCache.want(accessor.ref(), REFRESH_TICKS);
-        Pin pin = new Pin(accessor, anchor, accessor instanceof BlockAccessor block ? block.state().getBlock() : null,
-                DisplayInfo.build(accessor), screenX, screenY);
+        Pin pin = new Pin(accessor, mode, accessor instanceof BlockAccessor block ? block.state().getBlock() : null,
+                DisplayInfo.build(accessor), x, y);
         PINS.add(pin);
+        sort();
         return pin;
     }
 
     public static void remove(Pin pin) {
         PINS.remove(pin);
+        if (dragging == pin) {
+            dragging = null;
+        }
     }
 
-    public static @Nullable Pin find(TargetRef ref) {
+    public static void bringToFront(Pin pin) {
+        if (PINS.remove(pin)) {
+            PINS.add(pin);
+            sort();
+        }
+    }
+
+    private static void sort() {
+        // Stable sort: open boxes first, windows last, keeping the order within each group.
+        PINS.sort((a, b) -> Boolean.compare(a.mode() == Pin.Mode.WINDOW, b.mode() == Pin.Mode.WINDOW));
+    }
+
+    public static @Nullable Pin find(TargetRef ref, Pin.Mode mode) {
         for (Pin pin : PINS) {
-            if (pin.ref().equals(ref)) {
+            if (pin.mode() == mode && pin.ref().equals(ref)) {
                 return pin;
             }
         }
         return null;
     }
 
-    public static boolean hasTargetPin(TargetRef ref) {
-        Pin pin = find(ref);
-        return pin != null && pin.anchor() == PinAnchor.TARGET;
-    }
-
-    /** The topmost visible pin under the mouse. */
+    /** The topmost visible box under the mouse. */
     public static @Nullable Pin pinAt(double mouseX, double mouseY) {
         for (int i = PINS.size() - 1; i >= 0; i--) {
             if (PINS.get(i).contains(mouseX, mouseY)) {
@@ -97,7 +138,33 @@ public final class PinManager {
         return null;
     }
 
+    public static void startDrag(Pin pin, double mouseX, double mouseY) {
+        dragging = pin;
+        dragOffsetX = mouseX - pin.windowX();
+        dragOffsetY = mouseY - pin.windowY();
+        bringToFront(pin);
+    }
+
+    public static void stopDrag() {
+        dragging = null;
+    }
+
+    public static boolean isDragging(Pin pin) {
+        return dragging == pin;
+    }
+
+    public static boolean isDragging() {
+        return dragging != null;
+    }
+
+    public static void drag(double mouseX, double mouseY) {
+        if (dragging != null) {
+            dragging.moveWindow(mouseX - dragOffsetX, mouseY - dragOffsetY);
+        }
+    }
+
     public static void clear() {
         PINS.clear();
+        dragging = null;
     }
 }

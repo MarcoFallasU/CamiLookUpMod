@@ -13,6 +13,7 @@ import java.util.Map;
 
 /** Requests server information for the targets being shown and keeps the latest answers. */
 public final class ServerInfoCache {
+    /** Latest status from the server, and the sections of the last successful answer. */
     public record Entry(InfoResponsePacket.Status status, List<InfoSection> sections) {
     }
 
@@ -45,9 +46,16 @@ public final class ServerInfoCache {
     }
 
     static void onResponse(InfoResponsePacket packet) {
-        if (LAST_WANTED.containsKey(packet.target())) {
-            ENTRIES.put(packet.target(), new Entry(packet.status(), packet.sections()));
+        if (!LAST_WANTED.containsKey(packet.target())) {
+            return;
         }
+        List<InfoSection> sections = packet.sections();
+        if (packet.status() != InfoResponsePacket.Status.OK) {
+            // Keep showing what was last known, marked with the status notice.
+            Entry previous = ENTRIES.get(packet.target());
+            sections = previous != null ? previous.sections() : List.of();
+        }
+        ENTRIES.put(packet.target(), new Entry(packet.status(), sections));
     }
 
     public static void tick() {

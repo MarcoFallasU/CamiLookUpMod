@@ -4,21 +4,28 @@ import io.github.marcofallasu.camilookup.api.target.LookUpAccessor;
 import io.github.marcofallasu.camilookup.client.pin.Pin;
 import io.github.marcofallasu.camilookup.client.pin.PinManager;
 import io.github.marcofallasu.camilookup.client.render.LookUpOverlay;
-import io.github.marcofallasu.camilookup.config.ClientConfig;
-import io.github.marcofallasu.camilookup.config.ClientConfig.PinAnchor;
+import io.github.marcofallasu.camilookup.client.render.PanelButton;
 import io.github.marcofallasu.camilookup.core.LookUpRegistry;
 import io.github.marcofallasu.camilookup.core.Targets;
 import net.minecraft.client.Minecraft;
 import org.lwjgl.glfw.GLFW;
 
-/** Mouse handling while cursor mode is active. */
+/**
+ * Mouse handling while cursor mode is active.
+ * <ul>
+ *     <li>Click a target: keep its box open next to it (click again, or click the box, to close it).</li>
+ *     <li>Pin button of an open box, or CTRL + click a target: pin it as a window (needs the mod on the server).</li>
+ *     <li>Drag a window by its header to move it; its close button closes it.</li>
+ *     <li>Right click a box: addon action. Mouse wheel over a box: scroll it.</li>
+ * </ul>
+ */
 final class PinInteractions {
     private static final double SCROLL_STEP = 10.0;
 
     private PinInteractions() {
     }
 
-    static void onClick(int button, boolean controlDown) {
+    static void onPress(int button, boolean controlDown) {
         Minecraft minecraft = Minecraft.getInstance();
         double mouseX = minecraft.mouseHandler.getScaledXPos(minecraft.getWindow());
         double mouseY = minecraft.mouseHandler.getScaledYPos(minecraft.getWindow());
@@ -26,25 +33,49 @@ final class PinInteractions {
 
         if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
             if (pin != null) {
-                PinManager.remove(pin);
+                clickBox(pin, mouseX, mouseY);
                 return;
             }
             LookUpAccessor target = LookUpOverlay.hovered();
             if (target == null) {
                 return;
             }
-            Pin existing = PinManager.find(target.ref());
-            if (existing != null) {
-                PinManager.remove(existing);
-                return;
-            }
-            PinAnchor anchor = ClientConfig.pinAnchor();
             if (controlDown) {
-                anchor = anchor == PinAnchor.TARGET ? PinAnchor.SCREEN : PinAnchor.TARGET;
+                if (ClientState.serverHasMod()) {
+                    PinManager.pinWindow(target, mouseX + 12, mouseY - 12);
+                }
+            } else {
+                PinManager.toggleOpen(target);
             }
-            PinManager.add(target, anchor, mouseX, mouseY);
         } else if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT && pin != null) {
             runPinAction(pin);
+        }
+    }
+
+    static void onRelease(int button) {
+        if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+            PinManager.stopDrag();
+        }
+    }
+
+    private static void clickBox(Pin pin, double mouseX, double mouseY) {
+        PanelButton button = pin.buttonAt(mouseX, mouseY);
+        if (pin.mode() == Pin.Mode.WINDOW) {
+            if (button == PanelButton.CLOSE) {
+                PinManager.remove(pin);
+            } else if (pin.isOnHeader(mouseX, mouseY)) {
+                PinManager.startDrag(pin, mouseX, mouseY);
+            } else {
+                PinManager.bringToFront(pin);
+            }
+            return;
+        }
+        if (button == PanelButton.PIN && ClientState.serverHasMod()) {
+            // The window appears where the open box was, at full size.
+            PinManager.remove(pin);
+            PinManager.pinWindow(pin.accessor(), pin.left(), pin.top());
+        } else {
+            PinManager.remove(pin);
         }
     }
 
@@ -65,7 +96,7 @@ final class PinInteractions {
         }
     }
 
-    /** Scrolls the pinned box under the mouse; returns whether the scroll was used. */
+    /** Scrolls the box under the mouse; returns whether the scroll was used. */
     static boolean onScroll(double deltaY) {
         Minecraft minecraft = Minecraft.getInstance();
         Pin pin = PinManager.pinAt(minecraft.mouseHandler.getScaledXPos(minecraft.getWindow()),

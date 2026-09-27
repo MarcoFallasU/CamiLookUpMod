@@ -1,13 +1,10 @@
 {
   "key.camilookup.cursor": "Modo cursor",
   "key.category.camilookup.main": "Cami LookUp",
-
   "camilookup.yes": "Sí",
   "camilookup.no": "No",
-
   "camilookup.notice.denied": "El servidor restringe esta información",
   "camilookup.notice.out_of_range": "Fuera de alcance",
-
   "camilookup.technical.hardness": "Dureza",
   "camilookup.technical.unbreakable": "Irrompible",
   "camilookup.technical.tool": "Herramienta",
@@ -17,7 +14,6 @@
   "camilookup.technical.light_value": "emite %s · bloque %s · cielo %s",
   "camilookup.technical.biome": "Bioma",
   "camilookup.technical.position": "Posición",
-
   "camilookup.tool.pickaxe": "Pico",
   "camilookup.tool.axe": "Hacha",
   "camilookup.tool.shovel": "Pala",
@@ -25,11 +21,9 @@
   "camilookup.tier.stone": "piedra",
   "camilookup.tier.iron": "hierro",
   "camilookup.tier.diamond": "diamante",
-
   "camilookup.container.empty": "Vacío",
   "camilookup.container.more": "+%s más",
   "camilookup.container.unlooted": "Botín aún no generado",
-
   "camilookup.entity.armor": "Armadura",
   "camilookup.entity.baby": "Cría",
   "camilookup.entity.rotation": "Rotación",
@@ -37,5 +31,8 @@
   "camilookup.entity.breed_cooldown": "Puede reproducirse en",
   "camilookup.entity.in_love": "Enamorado",
   "camilookup.entity.despawns_in": "Desaparece en",
-  "camilookup.entity.never_despawns": "No desaparece"
+  "camilookup.entity.never_despawns": "No desaparece",
+  "camilookup.button.pin": "Fijar en la pantalla",
+  "camilookup.button.close": "Cerrar",
+  "camilookup.notice.unavailable": "Ya no está disponible"
 }

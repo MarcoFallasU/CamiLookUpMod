@@ -22,14 +22,12 @@ Mod para **Minecraft Forge 1.21.11** que permite inspeccionar bloques y entidade
 - Contenedores: **cuadrícula de iconos** con cantidades (compacta en el resumen, completa con slots vacíos en el detalle). En un recuadro fijado, pasar el cursor sobre un item muestra su tooltip normal.
 - Vida: **corazones**, y número (`150/200 ❤`) si son demasiados.
 
-## Recuadros fijados (pins)
-- **Click izquierdo** fija el recuadro; otro click **sobre el recuadro o sobre el objetivo** lo cierra.
-- **Sin límite** de recuadros fijados.
-- Siguen visibles al salir del modo cursor.
-- **Anclado al objetivo** (por defecto): sigue al bloque o entidad en pantalla y se actualiza en vivo; se oculta si el objetivo sale de la vista y se cierra si desaparece o queda fuera de alcance.
-- Opción de **anclar a la pantalla**: queda como una "foto" que no se actualiza (útil si el servidor bloquea la información o no tiene el mod).
+## Recuadros abiertos y ventanas fijadas
+- **Mantener abierto** (click izquierdo sobre el objetivo): el recuadro queda flotando junto al bloque o sobre la entidad, la sigue y se actualiza en vivo. Se achica con la distancia para no tapar la pantalla. Muestra el resumen (detalle con SHIFT al pasar el cursor encima). Otro click **sobre el recuadro o sobre el objetivo** lo cierra. Se oculta si el objetivo sale de la vista y se cierra si desaparece o queda fuera de alcance. Funciona aunque el servidor no tenga el mod.
+- **Fijar** (botón 📌 del recuadro abierto, o CTRL + click sobre el objetivo): el recuadro pasa a ser una **ventana en la pantalla**, como una ventana de Windows: se arrastra por su cabecera, se cierra con ✕, muestra el detalle completo y se actualiza en vivo; si el objetivo deja de estar disponible conserva la última información con un aviso. **Solo disponible si el servidor tiene el mod.**
+- **Sin límite** de recuadros abiertos ni de ventanas; siguen visibles al salir del modo cursor.
 - **Click derecho**: acción registrada por un addon (por ejemplo, abrir la interfaz de otro mod). Sin addon, no hace nada.
-- **Rueda del mouse**: desplaza el contenido dentro de un recuadro fijado.
+- **Rueda del mouse**: desplaza el contenido de un recuadro abierto o de una ventana.
 
 ## Información vanilla
 - **Básico**: nombre, icono, mod de origen y propiedades del estado del bloque.
@@ -58,7 +56,7 @@ Mod para **Minecraft Forge 1.21.11** que permite inspeccionar bloques y entidade
 - Pantalla propia en el juego (botón *Config* en la lista de mods) además del archivo `.toml`.
 
 ## Fases
-1. **Fase 1**: modo cursor, raycast desde el cursor, tooltip, recuadros fijados, API, sincronización con el servidor, información básica, de contenedores y de entidades.
+1. **Fase 1**: modo cursor, raycast desde el cursor, tooltip, recuadros abiertos y ventanas fijadas, API, sincronización con el servidor, información básica, de contenedores y de entidades.
 2. **Fase 2**: resto de bloques y entidades especiales, restricciones del servidor completas y pantalla de configuración.
 
 ## Notas de desarrollo
