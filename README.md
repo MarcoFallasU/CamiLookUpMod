@@ -6,7 +6,8 @@ El alcance acordado está en [`docs/ALCANCE.md`](docs/ALCANCE.md).
 ## Uso
 
 - Mantén **ALT** (reasignable en *Controles*) para liberar el cursor; la cámara queda fija pero puedes moverte.
-- Pasa el cursor sobre un bloque o entidad para ver el **resumen** (el objetivo se resalta con un contorno);
+- Pasa el cursor sobre un bloque o entidad para ver el **resumen** (los bloques se resaltan con un contorno y las
+  entidades con el efecto de brillo vanilla);
   mantén **SHIFT** para el **detalle completo**.
 - **Click izquierdo** fija el recuadro. Otro click sobre el recuadro o sobre el objetivo lo cierra.
   Con **CTRL** se usa el anclaje alternativo (objetivo ↔ pantalla).
@@ -16,6 +17,10 @@ El alcance acordado está en [`docs/ALCANCE.md`](docs/ALCANCE.md).
 
 Requiere los JDK **21** (compilación), **25** y **8** (herramientas de ForgeGradle 7) instalados localmente, y acceso de
 red a `maven.minecraftforge.net`, `*.mojang.com`, `libraries.minecraft.net` y `resources.download.minecraft.net`.
+
+ForgeGradle intenta descargar los JDK 25 y 8 por su cuenta. Si esa descarga falla (por ejemplo, con
+`sha256 Invalid` al bajar el JDK 8), instala el JDK a mano y apunta la variable de entorno `JAVA_HOME_8_X64` (o
+`JAVA_HOME_25_X64`) a su carpeta; después ejecuta `gradlew --stop` para que Gradle tome la variable.
 
 ```sh
 ./gradlew build            # genera build/libs/camilookup-<versión>.jar

@@ -9,70 +9,94 @@ import io.github.marcofallasu.camilookup.client.CursorMode;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.ShapeRenderer;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.state.LevelRenderState;
 import net.minecraft.core.BlockPos;
+import net.minecraft.util.ARGB;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.client.event.RenderHighlightEvent;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * In cursor mode, replaces the vanilla crosshair outline with an outline around the block or entity under the cursor.
+ * In cursor mode, highlights the target under the cursor instead of the crosshair target: blocks get an outline and
+ * entities get the vanilla glowing effect.
  */
 public final class TargetHighlight {
-    private static final int COLOR = 0xE6FFFFFF;
-    /** Grows entity boxes slightly so the outline does not hide inside the model. */
-    private static final double ENTITY_MARGIN = 0.02;
+    private static final int BLOCK_COLOR = 0xE6FFFFFF;
+    /** Maximum distance between an entity's interpolated position and its render state to consider them the same. */
+    private static final double MATCH_DISTANCE_SQR = 1.0E-4;
 
     private TargetHighlight() {
     }
 
-    /** Listener for both highlight events; returns {@code true} to cancel the vanilla outline. */
+    /**
+     * Listener for both highlight events, fired every frame right after entities are extracted for rendering.
+     *
+     * @return {@code true} to cancel the vanilla crosshair outline
+     */
     public static boolean onHighlight(RenderHighlightEvent event) {
         if (!CursorMode.isActive()) {
             return false;
         }
-        if (LookUpOverlay.hovered() == null) {
-            // The crosshair target is not what the player is pointing at in cursor mode.
-            return true;
+        LookUpAccessor target = LookUpOverlay.hovered();
+        if (target instanceof BlockAccessor) {
+            event.setCustomRenderer(TargetHighlight::renderBlockOutline);
+            return false;
         }
-        event.setCustomRenderer(TargetHighlight::render);
-        return false;
+        if (target instanceof EntityAccessor entity) {
+            glow(event.getLevelRenderState(), entity.entity());
+        }
+        // In cursor mode the crosshair target is not what the player is pointing at.
+        return true;
     }
 
-    private static void render(MultiBufferSource.BufferSource buffers, PoseStack poseStack, boolean translucent, LevelRenderState state) {
-        LookUpAccessor target = LookUpOverlay.hovered();
-        if (translucent || target == null || !CursorMode.isActive()) {
+    /** Gives the entity the same outline as the vanilla glowing effect, for this frame only. */
+    private static void glow(LevelRenderState state, Entity entity) {
+        EntityRenderState renderState = findRenderState(state, entity);
+        if (renderState != null) {
+            renderState.outlineColor = ARGB.opaque(entity.getTeamColor());
+            state.haveGlowingEntities = true;
+        }
+    }
+
+    private static @Nullable EntityRenderState findRenderState(LevelRenderState state, Entity entity) {
+        Minecraft minecraft = Minecraft.getInstance();
+        boolean frozen = minecraft.level != null && minecraft.level.tickRateManager().isEntityFrozen(entity);
+        Vec3 position = entity.getPosition(minecraft.getDeltaTracker().getGameTimeDeltaPartialTick(!frozen));
+        EntityRenderState closest = null;
+        double closestDistance = MATCH_DISTANCE_SQR;
+        for (EntityRenderState renderState : state.entityRenderStates) {
+            if (renderState.entityType != entity.getType()) {
+                continue;
+            }
+            double distance = position.distanceToSqr(renderState.x, renderState.y, renderState.z);
+            if (distance <= closestDistance) {
+                closest = renderState;
+                closestDistance = distance;
+            }
+        }
+        return closest;
+    }
+
+    private static void renderBlockOutline(MultiBufferSource.BufferSource buffers, PoseStack poseStack, boolean translucent,
+                                           LevelRenderState state) {
+        if (translucent || !CursorMode.isActive() || !(LookUpOverlay.hovered() instanceof BlockAccessor block)) {
             return;
         }
-        Minecraft minecraft = Minecraft.getInstance();
-        Vec3 camera = state.cameraRenderState.pos;
-        VoxelShape shape;
-        Vec3 origin;
-        switch (target) {
-            case BlockAccessor block -> {
-                BlockPos pos = block.pos();
-                shape = block.state().getShape(block.level(), pos, CollisionContext.of(block.player()));
-                if (shape.isEmpty()) {
-                    shape = Shapes.block();
-                }
-                origin = Vec3.atLowerCornerOf(pos);
-            }
-            case EntityAccessor entityAccessor -> {
-                Entity entity = entityAccessor.entity();
-                Vec3 position = entity.getPosition(minecraft.getDeltaTracker().getGameTimeDeltaPartialTick(false));
-                AABB box = entity.getBoundingBox().move(entity.position().scale(-1)).inflate(ENTITY_MARGIN);
-                shape = Shapes.create(box);
-                origin = position;
-            }
+        BlockPos pos = block.pos();
+        VoxelShape shape = block.state().getShape(block.level(), pos, CollisionContext.of(block.player()));
+        if (shape.isEmpty()) {
+            shape = Shapes.block();
         }
+        Vec3 camera = state.cameraRenderState.pos;
         VertexConsumer lines = buffers.getBuffer(RenderTypes.lines());
-        ShapeRenderer.renderShape(poseStack, lines, shape, origin.x - camera.x, origin.y - camera.y, origin.z - camera.z,
-                COLOR, minecraft.getWindow().getAppropriateLineWidth());
+        ShapeRenderer.renderShape(poseStack, lines, shape, pos.getX() - camera.x, pos.getY() - camera.y, pos.getZ() - camera.z,
+                BLOCK_COLOR, Minecraft.getInstance().getWindow().getAppropriateLineWidth());
         buffers.endLastBatch();
     }
 }
