@@ -1,6 +1,7 @@
 package io.github.marcofallasu.camilookup.client.render;
 
 import com.mojang.blaze3d.platform.Window;
+import com.mojang.blaze3d.platform.cursor.CursorTypes;
 import io.github.marcofallasu.camilookup.api.target.BlockAccessor;
 import io.github.marcofallasu.camilookup.api.target.EntityAccessor;
 import io.github.marcofallasu.camilookup.api.target.LookUpAccessor;
@@ -33,6 +34,10 @@ public final class LookUpOverlay {
     /** Open boxes are drawn at full size up to this distance, and shrink beyond it. */
     private static final double FULL_SIZE_DISTANCE = 6.0;
     private static final float MIN_OPEN_SCALE = 0.5F;
+    /** Smallest width a window can be resized to. */
+    private static final int MIN_WINDOW_WIDTH = 60;
+    private static final int GRIP_COLOR = 0xFFAAAAAA;
+    private static final int GRIP_HOVER_COLOR = 0xFFFFFF55;
     /** Height above an entity's head where its open box floats. */
     private static final double ENTITY_LABEL_HEIGHT = 0.4;
 
@@ -99,12 +104,22 @@ public final class LookUpOverlay {
             graphics.pose().pushMatrix();
             graphics.pose().translate((float) pin.left(), (float) pin.top());
             graphics.pose().scale(pin.scale(), pin.scale());
-            ItemStack stack = pin.panel().render(graphics, font, 0, 0, pin.maxHeight(), pin.scroll(),
+            ItemStack stack = pin.panel().render(graphics, font, 0, 0, pin.boxWidth(), pin.boxHeight(), pin.scroll(),
                     underMouse ? pin.localX(mouseX) : Double.NaN, underMouse ? pin.localY(mouseY) : Double.NaN);
+            if (pin.mode() == Pin.Mode.WINDOW) {
+                boolean gripActive = PinManager.isDragging(pin) || underMouse && pin.isOnResizeGrip(mouseX, mouseY);
+                renderResizeGrip(graphics, pin.boxWidth(), pin.boxHeight(), gripActive);
+            }
             graphics.pose().popMatrix();
             if (underMouse) {
                 hoveredStack = stack;
                 hoveredButton = pin.buttonAt(mouseX, mouseY);
+                if (hoveredButton != null) {
+                    graphics.requestCursor(CursorTypes.POINTING_HAND);
+                } else if (pin.mode() == Pin.Mode.WINDOW
+                        && (pin.isOnResizeGrip(mouseX, mouseY) || pin.isOnHeader(mouseX, mouseY))) {
+                    graphics.requestCursor(CursorTypes.RESIZE_ALL);
+                }
             }
         }
 
@@ -147,21 +162,46 @@ public final class LookUpOverlay {
         double width = panel.width(maxHeight) * scale;
         double height = panel.height(maxHeight) * scale;
         double gap = (InfoPanel.BORDER + 2) * scale;
-        pin.setLayout(panel, point[0] - width / 2, point[1] - height - gap, scale, maxHeight);
+        pin.setLayout(panel, point[0] - width / 2, point[1] - height - gap, scale,
+                panel.width(maxHeight), panel.height(maxHeight));
     }
 
-    /** Places a pinned window at its saved position, kept inside the screen. */
+    /** Places a pinned window at its saved position and size, kept inside the screen. */
     private static void layoutWindow(Pin pin, Font font, int screenWidth, int screenHeight) {
         InfoPanel panel = InfoPanel.layout(pin.info(), true, font, List.of(PanelButton.CLOSE));
-        int maxHeight = maxWindowHeight(screenHeight);
-        int width = panel.width(maxHeight);
-        int height = panel.height(maxHeight);
+        int maxWidth = Math.max(MIN_WINDOW_WIDTH, screenWidth - SCREEN_MARGIN * 2);
+        int maxHeight = Math.max(panel.minHeight(), screenHeight - SCREEN_MARGIN * 2);
+        int width;
+        int height;
+        if (pin.hasCustomSize()) {
+            width = Mth.clamp(pin.customWidth(), MIN_WINDOW_WIDTH, maxWidth);
+            height = Mth.clamp(pin.customHeight(), panel.minHeight(), maxHeight);
+        } else {
+            int naturalMaxHeight = maxWindowHeight(screenHeight);
+            width = panel.width(naturalMaxHeight);
+            height = panel.height(naturalMaxHeight);
+        }
         double x = Mth.clamp(pin.windowX(), SCREEN_MARGIN, Math.max(SCREEN_MARGIN, screenWidth - width - SCREEN_MARGIN));
         double y = Mth.clamp(pin.windowY(), SCREEN_MARGIN, Math.max(SCREEN_MARGIN, screenHeight - height - SCREEN_MARGIN));
         if (!PinManager.isDragging(pin)) {
             pin.moveWindow(x, y);
         }
-        pin.setLayout(panel, Math.round(x), Math.round(y), 1.0F, maxHeight);
+        pin.setLayout(panel, Math.round(x), Math.round(y), 1.0F, width, height);
+    }
+
+    /** Three diagonal lines in the bottom-right corner, like a desktop window's resize grip. */
+    private static void renderResizeGrip(GuiGraphics graphics, int boxWidth, int boxHeight, boolean active) {
+        int color = active ? GRIP_HOVER_COLOR : GRIP_COLOR;
+        int right = boxWidth + 1;
+        int bottom = boxHeight + 1;
+        for (int line = 0; line < 3; line++) {
+            int length = 2 + line * 2;
+            for (int i = 0; i < length; i++) {
+                int px = right - 1 - i;
+                int py = bottom - length + i;
+                graphics.fill(px, py, px + 1, py + 1, color);
+            }
+        }
     }
 
     private static int maxWindowHeight(int screenHeight) {

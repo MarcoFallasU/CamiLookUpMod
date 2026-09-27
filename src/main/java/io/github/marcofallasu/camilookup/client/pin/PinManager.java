@@ -33,6 +33,11 @@ public final class PinManager {
     private static @Nullable Pin dragging;
     private static double dragOffsetX;
     private static double dragOffsetY;
+    private static @Nullable Pin resizing;
+    private static double resizeStartX;
+    private static double resizeStartY;
+    private static int resizeStartWidth;
+    private static int resizeStartHeight;
 
     private PinManager() {
     }
@@ -105,6 +110,9 @@ public final class PinManager {
         if (dragging == pin) {
             dragging = null;
         }
+        if (resizing == pin) {
+            resizing = null;
+        }
     }
 
     public static void bringToFront(Pin pin) {
@@ -145,26 +153,43 @@ public final class PinManager {
         bringToFront(pin);
     }
 
+    public static void startResize(Pin pin, double mouseX, double mouseY) {
+        resizing = pin;
+        resizeStartX = mouseX;
+        resizeStartY = mouseY;
+        resizeStartWidth = pin.boxWidth();
+        resizeStartHeight = pin.boxHeight();
+        bringToFront(pin);
+    }
+
+    /** Ends any move or resize in progress. */
     public static void stopDrag() {
         dragging = null;
+        resizing = null;
     }
 
     public static boolean isDragging(Pin pin) {
-        return dragging == pin;
+        return dragging == pin || resizing == pin;
     }
 
     public static boolean isDragging() {
-        return dragging != null;
+        return dragging != null || resizing != null;
     }
 
+    /** Applies the mouse position to the window being moved or resized. */
     public static void drag(double mouseX, double mouseY) {
         if (dragging != null) {
             dragging.moveWindow(mouseX - dragOffsetX, mouseY - dragOffsetY);
+        }
+        if (resizing != null) {
+            resizing.resizeWindow((int) Math.round(resizeStartWidth + mouseX - resizeStartX),
+                    (int) Math.round(resizeStartHeight + mouseY - resizeStartY));
         }
     }
 
     public static void clear() {
         PINS.clear();
         dragging = null;
+        resizing = null;
     }
 }

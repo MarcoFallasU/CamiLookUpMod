@@ -177,11 +177,25 @@ public final class InfoPanel {
     }
 
     public boolean isScrollable(int maxHeight) {
-        return visibleBodyHeight(maxHeight) < bodyHeight;
+        return isScrollableIn(height(maxHeight));
     }
 
     public int maxScroll(int maxHeight) {
-        return Math.max(0, bodyHeight - visibleBodyHeight(maxHeight));
+        return maxScrollIn(height(maxHeight));
+    }
+
+    /** Whether the body must scroll when the box is {@code boxHeight} tall. */
+    public boolean isScrollableIn(int boxHeight) {
+        return bodyIn(boxHeight) < bodyHeight;
+    }
+
+    public int maxScrollIn(int boxHeight) {
+        return Math.max(0, bodyHeight - bodyIn(boxHeight));
+    }
+
+    /** Smallest box that still shows the header, part of the body and the footer. */
+    public int minHeight() {
+        return fixedHeight() + Math.min(bodyHeight, CELL);
     }
 
     public int headerHeight() {
@@ -189,9 +203,9 @@ public final class InfoPanel {
     }
 
     /** The header button at a point, in the same coordinates the box was rendered with. */
-    public @Nullable PanelButton buttonAt(double mouseX, double mouseY, int left, int top, int maxHeight) {
+    public @Nullable PanelButton buttonAt(double mouseX, double mouseY, int left, int top, int boxWidth) {
         for (int i = 0; i < buttons.size(); i++) {
-            int x = buttonX(i, left, maxHeight);
+            int x = buttonX(i, left, boxWidth);
             int y = buttonY(top);
             if (mouseX >= x - 1 && mouseX < x + PanelButton.SIZE + 1 && mouseY >= y - 1 && mouseY < y + PanelButton.SIZE + 1) {
                 return buttons.get(i);
@@ -200,8 +214,12 @@ public final class InfoPanel {
         return null;
     }
 
-    private int buttonX(int index, int left, int maxHeight) {
-        return left + width(maxHeight) - (buttons.size() - index) * BUTTON_SPACING + 2;
+    private int buttonX(int index, int left, int boxWidth) {
+        return left + boxWidth - (buttons.size() - index) * BUTTON_SPACING + 2;
+    }
+
+    private int buttonsWidth() {
+        return buttons.isEmpty() ? 0 : 4 + buttons.size() * BUTTON_SPACING;
     }
 
     private int buttonY(int top) {
@@ -216,41 +234,58 @@ public final class InfoPanel {
         return body.isEmpty() ? 0 : 2;
     }
 
+    private int fixedHeight() {
+        return headerHeight + gapAfterHeader() + gapBeforeFooter() + footerHeight;
+    }
+
     private int visibleBodyHeight(int maxHeight) {
-        int fixed = headerHeight + gapAfterHeader() + gapBeforeFooter() + footerHeight;
-        return Math.max(Math.min(bodyHeight, CELL), Math.min(bodyHeight, maxHeight - fixed));
+        return Math.max(Math.min(bodyHeight, CELL), Math.min(bodyHeight, maxHeight - fixedHeight()));
+    }
+
+    /** Visible body height inside a box of the given height. */
+    private int bodyIn(int boxHeight) {
+        return Math.max(0, boxHeight - fixedHeight());
+    }
+
+    /** Draws the box at its natural size, with the body limited so the whole box fits in {@code maxHeight}. */
+    public ItemStack render(GuiGraphics graphics, Font font, int left, int top, int maxHeight, int scroll,
+                            double mouseX, double mouseY) {
+        return render(graphics, font, left, top, width(maxHeight), height(maxHeight), scroll, mouseX, mouseY);
     }
 
     /**
-     * Draws the box with its content's top-left corner at ({@code left}, {@code top}).
+     * Draws the box with its content's top-left corner at ({@code left}, {@code top}) and the given content size.
+     * Content that does not fit is clipped; the body scrolls vertically.
      *
      * @return the item under the mouse, or an empty stack
      */
-    public ItemStack render(GuiGraphics graphics, Font font, int left, int top, int maxHeight, int scroll,
+    public ItemStack render(GuiGraphics graphics, Font font, int left, int top, int boxWidth, int boxHeight, int scroll,
                             double mouseX, double mouseY) {
-        int width = width(maxHeight);
-        int height = height(maxHeight);
-        TooltipRenderUtil.renderTooltipBackground(graphics, left, top, width, height, null);
+        TooltipRenderUtil.renderTooltipBackground(graphics, left, top, boxWidth, boxHeight, null);
+        boolean scrollable = isScrollableIn(boxHeight);
+        int contentRight = left + boxWidth - (scrollable ? SCROLLBAR : 0);
 
-        int y = top;
+        graphics.enableScissor(left, top, left + boxWidth - buttonsWidth(), top + headerHeight);
         if (icon.isEmpty()) {
-            graphics.drawString(font, title, left, y, -1, true);
+            graphics.drawString(font, title, left, top, -1, true);
         } else {
-            graphics.renderItem(icon, left, y);
-            graphics.drawString(font, title, left + CELL + 2, y + 4, -1, true);
+            graphics.renderItem(icon, left, top);
+            graphics.drawString(font, title, left + CELL + 2, top + 4, -1, true);
         }
-        PanelButton hoveredButton = buttonAt(mouseX, mouseY, left, top, maxHeight);
+        graphics.disableScissor();
+        PanelButton hoveredButton = buttonAt(mouseX, mouseY, left, top, boxWidth);
         for (int i = 0; i < buttons.size(); i++) {
-            buttons.get(i).render(graphics, buttonX(i, left, maxHeight), buttonY(top), buttons.get(i) == hoveredButton);
+            buttons.get(i).render(graphics, buttonX(i, left, boxWidth), buttonY(top), buttons.get(i) == hoveredButton);
         }
-        y += headerHeight + gapAfterHeader();
 
         ItemStack hovered = ItemStack.EMPTY;
-        int visibleBody = visibleBodyHeight(maxHeight);
-        if (!body.isEmpty()) {
-            int clampedScroll = Mth.clamp(scroll, 0, maxScroll(maxHeight));
-            boolean mouseInBody = mouseX >= left && mouseX < left + contentWidth && mouseY >= y && mouseY < y + visibleBody;
-            graphics.enableScissor(left, y, left + width, y + visibleBody);
+        int y = top + headerHeight + gapAfterHeader();
+        int visibleBody = bodyIn(boxHeight);
+        if (!body.isEmpty() && visibleBody > 0) {
+            int maxScroll = maxScrollIn(boxHeight);
+            int clampedScroll = Mth.clamp(scroll, 0, maxScroll);
+            boolean mouseInBody = mouseX >= left && mouseX < contentRight && mouseY >= y && mouseY < y + visibleBody;
+            graphics.enableScissor(left, y, contentRight, y + visibleBody);
             int rowY = y - clampedScroll;
             for (Row row : body) {
                 if (rowY + row.height() > y && rowY < y + visibleBody) {
@@ -263,20 +298,22 @@ public final class InfoPanel {
                 rowY += row.height();
             }
             graphics.disableScissor();
-            if (isScrollable(maxHeight)) {
-                int trackX = left + width - 2;
+            if (scrollable) {
+                int trackX = left + boxWidth - 2;
                 int thumbHeight = Math.max(8, visibleBody * visibleBody / bodyHeight);
-                int thumbY = y + (visibleBody - thumbHeight) * clampedScroll / maxScroll(maxHeight);
+                int thumbY = y + (visibleBody - thumbHeight) * clampedScroll / Math.max(1, maxScroll);
                 graphics.fill(trackX, y, trackX + 2, y + visibleBody, 0x40FFFFFF);
                 graphics.fill(trackX, thumbY, trackX + 2, thumbY + thumbHeight, 0xC0FFFFFF);
             }
-            y += visibleBody + gapBeforeFooter();
         }
 
+        int footerY = top + boxHeight - footerHeight;
+        graphics.enableScissor(left, footerY, contentRight, footerY + footerHeight);
         for (Row row : footer) {
-            row.render(graphics, font, left, y, Double.NaN, Double.NaN);
-            y += row.height();
+            row.render(graphics, font, left, footerY, Double.NaN, Double.NaN);
+            footerY += row.height();
         }
+        graphics.disableScissor();
         return hovered;
     }
 

@@ -15,7 +15,8 @@ import org.lwjgl.glfw.GLFW;
  * <ul>
  *     <li>Click a target: keep its box open next to it (click again, or click the box, to close it).</li>
  *     <li>Pin button of an open box, or CTRL + click a target: pin it as a window (needs the mod on the server).</li>
- *     <li>Drag a window by its header to move it; its close button closes it.</li>
+ *     <li>Drag a window by its header to move it and by its bottom-right corner to resize it; its close button
+ *     closes it.</li>
  *     <li>Right click a box: addon action. Mouse wheel over a box: scroll it.</li>
  * </ul>
  */
@@ -63,6 +64,8 @@ final class PinInteractions {
         if (pin.mode() == Pin.Mode.WINDOW) {
             if (button == PanelButton.CLOSE) {
                 PinManager.remove(pin);
+            } else if (pin.isOnResizeGrip(mouseX, mouseY)) {
+                PinManager.startResize(pin, mouseX, mouseY);
             } else if (pin.isOnHeader(mouseX, mouseY)) {
                 PinManager.startDrag(pin, mouseX, mouseY);
             } else {
