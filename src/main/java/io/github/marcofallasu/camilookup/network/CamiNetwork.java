@@ -11,7 +11,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.SimpleChannel;
 
 public final class CamiNetwork {
-    public static final int PROTOCOL_VERSION = 1;
+    public static final int PROTOCOL_VERSION = 2;
 
     // The channel is optional on both sides so either side can run without the other having the mod.
     public static final SimpleChannel CHANNEL = ChannelBuilder

@@ -18,7 +18,7 @@ public record InfoResponsePacket(TargetRef target, Status status, List<InfoSecti
 
     public enum Status {
         OK,
-        /** The server refused to share information (restriction rule, line of sight...). */
+        /** The server refused to share information (invisible target or a restriction rule). */
         DENIED,
         /** The target is farther than the server allows. */
         OUT_OF_RANGE,

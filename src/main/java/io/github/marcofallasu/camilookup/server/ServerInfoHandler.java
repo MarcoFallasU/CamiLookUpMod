@@ -3,7 +3,6 @@ package io.github.marcofallasu.camilookup.server;
 import io.github.marcofallasu.camilookup.api.IRestrictionRule;
 import io.github.marcofallasu.camilookup.api.InfoCategories;
 import io.github.marcofallasu.camilookup.api.info.InfoSection;
-import io.github.marcofallasu.camilookup.api.target.BlockAccessor;
 import io.github.marcofallasu.camilookup.api.target.EntityAccessor;
 import io.github.marcofallasu.camilookup.api.target.LookUpAccessor;
 import io.github.marcofallasu.camilookup.config.ServerConfig;
@@ -14,16 +13,8 @@ import io.github.marcofallasu.camilookup.network.CamiNetwork;
 import io.github.marcofallasu.camilookup.network.InfoRequestPacket;
 import io.github.marcofallasu.camilookup.network.InfoResponsePacket;
 import io.github.marcofallasu.camilookup.network.ServerSettingsPacket;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.ClipContext;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,7 +46,7 @@ public final class ServerInfoHandler {
     public static void sendSettings(ServerPlayer player) {
         if (CamiNetwork.isPresent(player.connection.getConnection())) {
             CamiNetwork.sendToPlayer(player, new ServerSettingsPacket(
-                    ServerConfig.maxDistance(), ServerConfig.requireLineOfSight(), disabledCategories()));
+                    ServerConfig.maxDistance(), disabledCategories()));
         }
     }
 
@@ -100,51 +91,12 @@ public final class ServerInfoHandler {
         if (Targets.distance(player.getEyePosition(), accessor) > ServerConfig.maxDistance() + DISTANCE_TOLERANCE) {
             return InfoResponsePacket.Status.OUT_OF_RANGE;
         }
-        if (ServerConfig.requireLineOfSight() && !hasLineOfSight(player, accessor)) {
-            return InfoResponsePacket.Status.DENIED;
-        }
         for (IRestrictionRule rule : LookUpRegistry.get().restrictionRules()) {
             if (!rule.canInspect(player, accessor)) {
                 return InfoResponsePacket.Status.DENIED;
             }
         }
         return InfoResponsePacket.Status.OK;
-    }
-
-    private static boolean hasLineOfSight(Player player, LookUpAccessor accessor) {
-        Vec3 eye = player.getEyePosition();
-        return switch (accessor) {
-            case BlockAccessor block -> {
-                BlockPos pos = block.pos();
-                Vec3 center = Vec3.atCenterOf(pos);
-                if (canSeeBlock(player, eye, center, pos)) {
-                    yield true;
-                }
-                for (Direction direction : Direction.values()) {
-                    Vec3 face = center.add(direction.getStepX() * 0.49, direction.getStepY() * 0.49, direction.getStepZ() * 0.49);
-                    if (canSeeBlock(player, eye, face, pos)) {
-                        yield true;
-                    }
-                }
-                yield false;
-            }
-            case EntityAccessor entityAccessor -> {
-                Entity entity = entityAccessor.entity();
-                yield isClear(player, eye, entity.getBoundingBox().getCenter())
-                        || isClear(player, eye, entity.getEyePosition())
-                        || isClear(player, eye, entity.position().add(0, 0.1, 0));
-            }
-        };
-    }
-
-    private static boolean canSeeBlock(Player player, Vec3 eye, Vec3 point, BlockPos target) {
-        BlockHitResult hit = player.level().clip(new ClipContext(eye, point, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, player));
-        return hit.getType() == HitResult.Type.MISS || hit.getBlockPos().equals(target);
-    }
-
-    private static boolean isClear(Player player, Vec3 eye, Vec3 point) {
-        BlockHitResult hit = player.level().clip(new ClipContext(eye, point, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
-        return hit.getType() == HitResult.Type.MISS;
     }
 
     /** Token bucket refilled every game tick. */

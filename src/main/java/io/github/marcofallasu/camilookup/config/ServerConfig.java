@@ -10,7 +10,6 @@ import java.util.Objects;
 public final class ServerConfig {
     public static final ForgeConfigSpec SPEC;
     private static final ForgeConfigSpec.DoubleValue MAX_DISTANCE;
-    private static final ForgeConfigSpec.BooleanValue REQUIRE_LINE_OF_SIGHT;
     private static final ForgeConfigSpec.ConfigValue<List<? extends String>> DISABLED_CATEGORIES;
     private static final ForgeConfigSpec.BooleanValue PLAYER_DETAILS;
     private static final ForgeConfigSpec.IntValue MAX_REQUESTS_PER_SECOND;
@@ -20,9 +19,6 @@ public final class ServerConfig {
         MAX_DISTANCE = builder
                 .comment("Maximum inspection distance, in blocks, measured from the player's eyes.")
                 .defineInRange("maxDistance", 32.0, 1.0, 256.0);
-        REQUIRE_LINE_OF_SIGHT = builder
-                .comment("Only answer when the player has a clear line of sight to the target.")
-                .define("requireLineOfSight", true);
         DISABLED_CATEGORIES = builder
                 .comment("Information categories the server does not share, e.g. [\"camilookup:container\"].",
                         "Built-in categories: " + String.join(", ", List.of(
@@ -46,10 +42,6 @@ public final class ServerConfig {
 
     public static double maxDistance() {
         return SPEC.isLoaded() ? MAX_DISTANCE.get() : MAX_DISTANCE.getDefault();
-    }
-
-    public static boolean requireLineOfSight() {
-        return SPEC.isLoaded() ? REQUIRE_LINE_OF_SIGHT.get() : REQUIRE_LINE_OF_SIGHT.getDefault();
     }
 
     public static List<Identifier> disabledCategories() {

@@ -44,7 +44,7 @@ Mod para **Minecraft Forge 1.21.11** que permite inspeccionar bloques y entidade
 - **Jugadores**: por defecto solo lo visible (nombre, vida, armadura y equipamiento); el servidor decide si muestra más.
 
 ## Servidor
-- Configuración del servidor: distancia máxima, categorías permitidas, exigir línea de visión, etc.
+- Configuración del servidor: distancia máxima, categorías permitidas, etc. No se exige línea de visión: para el jugador técnico, una tolva o entidad detrás de bloques se sigue viendo (por ejemplo, en una ventana fijada) mientras esté dentro de la distancia máxima.
 - Los addons pueden agregar sus propias reglas de restricción.
 
 ## API para addons (Java)

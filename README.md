@@ -35,7 +35,7 @@ ForgeGradle intenta descargar los JDK 25 y 8 por su cuenta. Si esa descarga fall
 
 - Cliente (`config/camilookup-client.toml`): modo de activación (mantener/alternar), distancia de inspección
   e información técnica.
-- Servidor (`serverconfig/camilookup-server.toml`): distancia máxima, línea de visión, categorías desactivadas,
+- Servidor (`serverconfig/camilookup-server.toml`): distancia máxima, categorías desactivadas,
   detalles de otros jugadores y límite de solicitudes por segundo.
 
 ## API para addons
