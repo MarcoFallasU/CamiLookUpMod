@@ -4,6 +4,7 @@ import io.github.marcofallasu.camilookup.CamiLookUp;
 import io.github.marcofallasu.camilookup.api.target.LookUpAccessor;
 import io.github.marcofallasu.camilookup.client.pin.PinManager;
 import io.github.marcofallasu.camilookup.client.render.LookUpOverlay;
+import io.github.marcofallasu.camilookup.client.render.TargetHighlight;
 import io.github.marcofallasu.camilookup.config.ClientConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
@@ -11,6 +12,7 @@ import net.minecraftforge.client.event.AddGuiOverlayLayersEvent;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
+import net.minecraftforge.client.event.RenderHighlightEvent;
 import net.minecraftforge.client.event.ViewportEvent;
 import net.minecraftforge.client.gui.overlay.ForgeLayeredDraw;
 import net.minecraftforge.event.TickEvent;
@@ -18,6 +20,8 @@ import net.minecraftforge.eventbus.api.listener.Priority;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.lwjgl.glfw.GLFW;
+
+import java.util.function.Predicate;
 
 /** Client-side setup. Only loaded on the physical client. */
 public final class CamiLookUpClient {
@@ -35,6 +39,8 @@ public final class CamiLookUpClient {
                 .add(Identifier.fromNamespaceAndPath(CamiLookUp.MODID, "boxes"), LookUpOverlay::render)
                 .addConditionTo(ForgeLayeredDraw.PRE_SLEEP_STACK, ForgeLayeredDraw.CROSSHAIR, () -> !CursorMode.isActive()));
         ViewportEvent.ComputeFov.BUS.addListener(Priority.LOWEST, CameraProjection::onComputeFov);
+        RenderHighlightEvent.Block.BUS.addListener((Predicate<RenderHighlightEvent.Block>) TargetHighlight::onHighlight);
+        RenderHighlightEvent.Entity.BUS.addListener((Predicate<RenderHighlightEvent.Entity>) TargetHighlight::onHighlight);
 
         TickEvent.RenderTickEvent.Pre.BUS.addListener(event -> CursorMode.update());
         TickEvent.ClientTickEvent.Post.BUS.addListener(event -> onClientTick());

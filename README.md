@@ -6,7 +6,8 @@ El alcance acordado está en [`docs/ALCANCE.md`](docs/ALCANCE.md).
 ## Uso
 
 - Mantén **ALT** (reasignable en *Controles*) para liberar el cursor; la cámara queda fija pero puedes moverte.
-- Pasa el cursor sobre un bloque o entidad para ver el **resumen**; mantén **SHIFT** para el **detalle completo**.
+- Pasa el cursor sobre un bloque o entidad para ver el **resumen** (el objetivo se resalta con un contorno);
+  mantén **SHIFT** para el **detalle completo**.
 - **Click izquierdo** fija el recuadro. Otro click sobre el recuadro o sobre el objetivo lo cierra.
   Con **CTRL** se usa el anclaje alternativo (objetivo ↔ pantalla).
 - **Rueda del mouse** sobre un recuadro fijado desplaza su contenido; **click derecho** ejecuta la acción de un addon.
