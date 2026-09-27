@@ -1,6 +1,7 @@
 package io.github.marcofallasu.camilookup.vanilla;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 
@@ -25,6 +26,15 @@ final class Format {
     static Component yesNo(boolean value) {
         return Component.translatable(value ? "camilookup.yes" : "camilookup.no")
                 .withStyle(value ? ChatFormatting.GREEN : ChatFormatting.RED);
+    }
+
+    static Component direction(Direction direction) {
+        return Component.translatable("camilookup.direction." + direction.getSerializedName());
+    }
+
+    /** "value/max" as a fraction, e.g. 3/5. */
+    static String fraction(int value, int max) {
+        return value + "/" + max;
     }
 
     static String number(double value) {

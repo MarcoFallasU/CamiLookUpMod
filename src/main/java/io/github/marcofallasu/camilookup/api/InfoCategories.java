@@ -10,6 +10,16 @@ public final class InfoCategories {
     public static final Identifier TECHNICAL = id("technical");
     /** Contents of containers. */
     public static final Identifier CONTAINER = id("container");
+    /** Redstone components: delays, modes, signal strength. */
+    public static final Identifier REDSTONE = id("redstone");
+    /** Crops, saplings, beehives, composters and eggs. */
+    public static final Identifier FARM = id("farm");
+    /** Lecterns, signs, jukeboxes, note blocks, bookshelves, beacons, cauldrons, end portal frames. */
+    public static final Identifier UTILITY = id("utility");
+    /** Crafters, trial spawners, vaults, decorated pots and respawn anchors. */
+    public static final Identifier ADVANCED = id("advanced");
+    /** The hidden item of suspicious sand and gravel. Disabled by default on servers. */
+    public static final Identifier SUSPICIOUS_BLOCK = id("suspicious_block");
     /** Furnaces and other machines that process items. */
     public static final Identifier PROCESSING = id("processing");
     /** Health, armor, equipment and other entity information. */

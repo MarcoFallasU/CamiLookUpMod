@@ -24,9 +24,12 @@ public final class ServerConfig {
                         "Built-in categories: " + String.join(", ", List.of(
                                 InfoCategories.BASIC.toString(), InfoCategories.TECHNICAL.toString(),
                                 InfoCategories.CONTAINER.toString(), InfoCategories.PROCESSING.toString(),
+                                InfoCategories.REDSTONE.toString(), InfoCategories.FARM.toString(),
+                                InfoCategories.UTILITY.toString(), InfoCategories.ADVANCED.toString(),
+                                InfoCategories.SUSPICIOUS_BLOCK.toString(),
                                 InfoCategories.ENTITY.toString(),
                                 InfoCategories.EFFECTS.toString(), InfoCategories.PLAYER_DETAILS.toString())))
-                .defineListAllowEmpty("disabledCategories", List.<String>of(),
+                .defineListAllowEmpty("disabledCategories", List.of(InfoCategories.SUSPICIOUS_BLOCK.toString()),
                         value -> value instanceof String s && Identifier.tryParse(s) != null);
         PLAYER_DETAILS = builder
                 .comment("Share information about other players beyond what is visible (e.g. status effects).")
