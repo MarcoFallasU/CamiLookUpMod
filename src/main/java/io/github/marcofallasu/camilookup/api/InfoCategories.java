@@ -10,6 +10,8 @@ public final class InfoCategories {
     public static final Identifier TECHNICAL = id("technical");
     /** Contents of containers. */
     public static final Identifier CONTAINER = id("container");
+    /** Furnaces and other machines that process items. */
+    public static final Identifier PROCESSING = id("processing");
     /** Health, armor, equipment and other entity information. */
     public static final Identifier ENTITY = id("entity");
     /** Active status effects of entities. */

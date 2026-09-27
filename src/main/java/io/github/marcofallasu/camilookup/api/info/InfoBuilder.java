@@ -48,6 +48,11 @@ public interface InfoBuilder {
         return add(new InfoElement.ItemRow(items, Visibility.ALWAYS));
     }
 
+    /** A furnace-like machine; see {@link InfoElement.Process}. */
+    default InfoBuilder process(List<ItemStack> inputs, ItemStack fuel, List<ItemStack> outputs, float progress, float fuelLevel) {
+        return add(new InfoElement.Process(inputs, fuel, outputs, progress, fuelLevel, Visibility.ALWAYS));
+    }
+
     default InfoBuilder health(float health, float maxHealth) {
         return add(new InfoElement.Health(health, maxHealth, Visibility.ALWAYS));
     }

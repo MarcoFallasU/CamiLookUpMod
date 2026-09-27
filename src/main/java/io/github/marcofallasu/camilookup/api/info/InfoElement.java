@@ -14,7 +14,7 @@ import java.util.List;
  * sent to the client.
  */
 public sealed interface InfoElement permits InfoElement.Text, InfoElement.IconText, InfoElement.ItemGrid,
-        InfoElement.ItemRow, InfoElement.Health {
+        InfoElement.ItemRow, InfoElement.Health, InfoElement.Process {
 
     StreamCodec<RegistryFriendlyByteBuf, List<ItemStack>> STACKS_CODEC =
             ItemStack.OPTIONAL_STREAM_CODEC.apply(ByteBufCodecs.list(4096));
@@ -38,6 +38,13 @@ public sealed interface InfoElement permits InfoElement.Text, InfoElement.IconTe
                         buf.writeFloat(health.health());
                         buf.writeFloat(health.maxHealth());
                     }
+                    case Process process -> {
+                        STACKS_CODEC.encode(buf, process.inputs());
+                        ItemStack.OPTIONAL_STREAM_CODEC.encode(buf, process.fuel());
+                        STACKS_CODEC.encode(buf, process.outputs());
+                        buf.writeFloat(process.progress());
+                        buf.writeFloat(process.fuelLevel());
+                    }
                 }
             },
             buf -> {
@@ -50,6 +57,8 @@ public sealed interface InfoElement permits InfoElement.Text, InfoElement.IconTe
                     case 2 -> new ItemGrid(STACKS_CODEC.decode(buf), buf.readVarInt(), visibility);
                     case 3 -> new ItemRow(STACKS_CODEC.decode(buf), visibility);
                     case 4 -> new Health(buf.readFloat(), buf.readFloat(), visibility);
+                    case 5 -> new Process(STACKS_CODEC.decode(buf), ItemStack.OPTIONAL_STREAM_CODEC.decode(buf),
+                            STACKS_CODEC.decode(buf), buf.readFloat(), buf.readFloat(), visibility);
                     default -> throw new IllegalArgumentException("Unknown info element type " + type);
                 };
             });
@@ -111,6 +120,33 @@ public sealed interface InfoElement permits InfoElement.Text, InfoElement.IconTe
         @Override
         public int type() {
             return 4;
+        }
+    }
+
+    /**
+     * A machine that turns inputs into outputs, drawn like a furnace: inputs, a progress arrow and outputs, with an
+     * optional fuel slot and flame.
+     *
+     * @param progress  progress of the current operation, from 0 to 1
+     * @param fuelLevel remaining fuel from 0 to 1, or a negative value when the machine has no fuel slot
+     */
+    record Process(List<ItemStack> inputs, ItemStack fuel, List<ItemStack> outputs, float progress, float fuelLevel,
+                   Visibility visibility) implements InfoElement {
+        public Process {
+            inputs = inputs.stream().map(ItemStack::copy).toList();
+            fuel = fuel.copy();
+            outputs = outputs.stream().map(ItemStack::copy).toList();
+            progress = Math.clamp(progress, 0.0F, 1.0F);
+            fuelLevel = Math.min(fuelLevel, 1.0F);
+        }
+
+        public boolean hasFuel() {
+            return fuelLevel >= 0;
+        }
+
+        @Override
+        public int type() {
+            return 5;
         }
     }
 }

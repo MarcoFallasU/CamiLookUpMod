@@ -34,5 +34,8 @@
   "camilookup.entity.never_despawns": "Never despawns",
   "camilookup.button.pin": "Pin to screen",
   "camilookup.button.close": "Close",
-  "camilookup.notice.unavailable": "No longer available"
+  "camilookup.notice.unavailable": "No longer available",
+  "camilookup.furnace.progress": "Cooking",
+  "camilookup.furnace.progress_value": "%s%% (%s left)",
+  "camilookup.furnace.fuel": "Fuel left"
 }

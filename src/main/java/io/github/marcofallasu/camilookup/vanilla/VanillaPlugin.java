@@ -18,6 +18,7 @@ public final class VanillaPlugin {
     private static void register(LookUpRegistrar registrar) {
         registrar.registerBlockProvider(ProviderSide.CLIENT, id("block_basic"), InfoCategories.BASIC, 0, new BlockBasicProvider());
         registrar.registerBlockProvider(ProviderSide.SERVER, id("container"), InfoCategories.CONTAINER, 400, ContainerProviders::appendBlock);
+        registrar.registerBlockProvider(ProviderSide.SERVER, id("furnace"), InfoCategories.PROCESSING, 400, new FurnaceProvider());
         registrar.registerBlockProvider(ProviderSide.CLIENT, id("block_technical"), InfoCategories.TECHNICAL, 1000, new BlockTechnicalProvider());
 
         registrar.registerEntityProvider(ProviderSide.CLIENT, id("entity_basic"), InfoCategories.BASIC, 0, EntityProviders::appendBasic);

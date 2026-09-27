@@ -33,6 +33,11 @@ public final class InfoPanel {
     private static final Identifier HEART_CONTAINER = Identifier.withDefaultNamespace("hud/heart/container");
     private static final Identifier HEART_FULL = Identifier.withDefaultNamespace("hud/heart/full");
     private static final Identifier HEART_HALF = Identifier.withDefaultNamespace("hud/heart/half");
+    private static final Identifier BURN_PROGRESS = Identifier.withDefaultNamespace("container/furnace/burn_progress");
+    private static final Identifier LIT_PROGRESS = Identifier.withDefaultNamespace("container/furnace/lit_progress");
+    /** Tint used to draw the empty part of the arrow and flame. */
+    private static final int EMPTY_TINT = 0xFF404040;
+    private static final int SLOT_COLOR = 0x30FFFFFF;
 
     private final ItemStack icon;
     private final Component title;
@@ -113,6 +118,7 @@ public final class InfoPanel {
                     rows.add(new GridRow(items, items.size(), false));
                 }
             }
+            case InfoElement.Process process -> rows.add(new ProcessRow(process));
             case InfoElement.Health health -> {
                 int hearts = Mth.ceil(health.maxHealth() / 2.0F);
                 if (hearts <= MAX_HEARTS && hearts > 0) {
@@ -336,7 +342,7 @@ public final class InfoPanel {
                 int cellX = x + i % columns * CELL;
                 int cellY = y + i / columns * CELL;
                 if (showSlots) {
-                    graphics.fill(cellX, cellY, cellX + CELL - 1, cellY + CELL - 1, 0x30FFFFFF);
+                    graphics.fill(cellX, cellY, cellX + CELL - 1, cellY + CELL - 1, SLOT_COLOR);
                 }
                 ItemStack stack = stacks.get(i);
                 if (stack.isEmpty()) {
@@ -378,6 +384,84 @@ public final class InfoPanel {
                 }
             }
             return ItemStack.EMPTY;
+        }
+    }
+
+    /** Draws an item slot with its background and returns the stack if the mouse is over it. */
+    private static ItemStack renderSlot(GuiGraphics graphics, Font font, ItemStack stack, int x, int y, double mouseX, double mouseY) {
+        graphics.fill(x, y, x + CELL - 1, y + CELL - 1, SLOT_COLOR);
+        if (stack.isEmpty()) {
+            return ItemStack.EMPTY;
+        }
+        graphics.renderItem(stack, x, y);
+        graphics.renderItemDecorations(font, stack, x, y, countText(stack.getCount()));
+        return mouseX >= x && mouseX < x + CELL && mouseY >= y && mouseY < y + CELL ? stack : ItemStack.EMPTY;
+    }
+
+    /** A furnace-like layout: inputs over the flame and fuel, then the progress arrow and the outputs. */
+    private record ProcessRow(InfoElement.Process process) implements Row {
+        private static final int ARROW_WIDTH = 24;
+        private static final int ARROW_HEIGHT = 16;
+        private static final int FLAME_SIZE = 14;
+
+        private int arrowX() {
+            return Math.max(1, process.inputs().size()) * CELL + 4;
+        }
+
+        private int arrowY() {
+            return process.hasFuel() ? CELL - 1 : 1;
+        }
+
+        private int outputsX() {
+            return arrowX() + ARROW_WIDTH + 4;
+        }
+
+        @Override
+        public int width() {
+            return outputsX() + Math.max(1, process.outputs().size()) * CELL;
+        }
+
+        @Override
+        public int height() {
+            return process.hasFuel() ? CELL * 3 - 2 : CELL;
+        }
+
+        @Override
+        public ItemStack render(GuiGraphics graphics, Font font, int x, int y, double mouseX, double mouseY) {
+            ItemStack hovered = ItemStack.EMPTY;
+            for (int i = 0; i < process.inputs().size(); i++) {
+                hovered = orElse(hovered, renderSlot(graphics, font, process.inputs().get(i), x + i * CELL, y, mouseX, mouseY));
+            }
+            if (process.hasFuel()) {
+                int flameX = x + 2;
+                int flameY = y + CELL;
+                graphics.blitSprite(RenderPipelines.GUI_TEXTURED, LIT_PROGRESS, flameX, flameY, FLAME_SIZE, FLAME_SIZE, EMPTY_TINT);
+                if (process.fuelLevel() > 0) {
+                    int lit = Mth.ceil(process.fuelLevel() * (FLAME_SIZE - 1)) + 1;
+                    graphics.blitSprite(RenderPipelines.GUI_TEXTURED, LIT_PROGRESS, FLAME_SIZE, FLAME_SIZE, 0, FLAME_SIZE - lit,
+                            flameX, flameY + FLAME_SIZE - lit, FLAME_SIZE, lit);
+                }
+                hovered = orElse(hovered, renderSlot(graphics, font, process.fuel(), x, y + CELL * 2 - 2, mouseX, mouseY));
+            }
+
+            int arrowX = x + arrowX();
+            int arrowY = y + arrowY();
+            graphics.blitSprite(RenderPipelines.GUI_TEXTURED, BURN_PROGRESS, arrowX, arrowY, ARROW_WIDTH, ARROW_HEIGHT, EMPTY_TINT);
+            int filled = Mth.ceil(process.progress() * ARROW_WIDTH);
+            if (filled > 0) {
+                graphics.blitSprite(RenderPipelines.GUI_TEXTURED, BURN_PROGRESS, ARROW_WIDTH, ARROW_HEIGHT, 0, 0,
+                        arrowX, arrowY, filled, ARROW_HEIGHT);
+            }
+
+            for (int i = 0; i < process.outputs().size(); i++) {
+                hovered = orElse(hovered, renderSlot(graphics, font, process.outputs().get(i),
+                        x + outputsX() + i * CELL, arrowY - 1, mouseX, mouseY));
+            }
+            return hovered;
+        }
+
+        private static ItemStack orElse(ItemStack current, ItemStack candidate) {
+            return candidate.isEmpty() ? current : candidate;
         }
     }
 }

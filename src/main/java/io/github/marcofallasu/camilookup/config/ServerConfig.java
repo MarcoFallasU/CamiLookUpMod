@@ -27,7 +27,8 @@ public final class ServerConfig {
                 .comment("Information categories the server does not share, e.g. [\"camilookup:container\"].",
                         "Built-in categories: " + String.join(", ", List.of(
                                 InfoCategories.BASIC.toString(), InfoCategories.TECHNICAL.toString(),
-                                InfoCategories.CONTAINER.toString(), InfoCategories.ENTITY.toString(),
+                                InfoCategories.CONTAINER.toString(), InfoCategories.PROCESSING.toString(),
+                                InfoCategories.ENTITY.toString(),
                                 InfoCategories.EFFECTS.toString(), InfoCategories.PLAYER_DETAILS.toString())))
                 .defineListAllowEmpty("disabledCategories", List.<String>of(),
                         value -> value instanceof String s && Identifier.tryParse(s) != null);
