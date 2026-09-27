@@ -43,4 +43,23 @@ public final class ClientConfig {
     public static boolean showTechnical() {
         return SPEC.isLoaded() ? SHOW_TECHNICAL.get() : SHOW_TECHNICAL.getDefault();
     }
+
+    public static void setActivationMode(ActivationMode mode) {
+        ACTIVATION_MODE.set(mode);
+    }
+
+    public static void setInspectDistance(double distance) {
+        INSPECT_DISTANCE.set(distance);
+    }
+
+    public static void setShowTechnical(boolean show) {
+        SHOW_TECHNICAL.set(show);
+    }
+
+    /** Writes the values to the config file. */
+    public static void save() {
+        if (SPEC.isLoaded()) {
+            SPEC.save();
+        }
+    }
 }

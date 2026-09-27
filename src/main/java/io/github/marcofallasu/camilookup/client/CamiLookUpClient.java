@@ -8,6 +8,7 @@ import io.github.marcofallasu.camilookup.client.render.TargetHighlight;
 import io.github.marcofallasu.camilookup.config.ClientConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
+import net.minecraftforge.client.ConfigScreenHandler;
 import net.minecraftforge.client.event.AddGuiOverlayLayersEvent;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.client.event.InputEvent;
@@ -33,6 +34,8 @@ public final class CamiLookUpClient {
 
     public static void init(FMLJavaModLoadingContext context) {
         context.registerConfig(ModConfig.Type.CLIENT, ClientConfig.SPEC);
+        context.registerExtensionPoint(ConfigScreenHandler.ConfigScreenFactory.class,
+                () -> new ConfigScreenHandler.ConfigScreenFactory(CamiConfigScreen::new));
 
         RegisterKeyMappingsEvent.BUS.addListener(event -> event.register(CursorMode.KEY));
         AddGuiOverlayLayersEvent.BUS.addListener(event -> event.getLayeredDraw()

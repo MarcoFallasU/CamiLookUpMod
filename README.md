@@ -45,9 +45,10 @@ Cada rama sale de `main` y vuelve a `main` con un pull request.
 
 ## Configuración
 
-- Cliente (`config/camilookup-client.toml`): modo de activación (mantener/alternar), distancia de inspección
-  e información técnica.
-- Servidor (`serverconfig/camilookup-server.toml`): distancia máxima, categorías desactivadas,
+- Cliente: desde el botón **Configurar** de la lista de mods, o en `config/camilookup-client.toml`: modo de
+  activación (mantener/alternar), distancia de inspección e información técnica.
+- Servidor (`serverconfig/camilookup-server.toml`): distancia máxima, categorías desactivadas (por defecto
+  `camilookup:suspicious_block`, el item oculto de la arena y grava sospechosas),
   detalles de otros jugadores y límite de solicitudes por segundo.
 
 ## API para addons
